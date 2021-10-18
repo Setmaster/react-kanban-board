@@ -9,19 +9,22 @@ const itemsFromBackend = [
     {id: uuid(), content: "Fourth task"},
 ];
 
+let orders = [];
+
 const columnsFromBackend = {
     [uuid()]: {
         name: 'To do',
         items: itemsFromBackend
     },
-    [uuid()]: {
-        name: 'In Progress',
-        items: []
+    ["orders"]: {
+        name: 'Orders',
+        items: orders
     },
     [uuid()]: {
         name: 'Done',
         items: []
     },
+
 };
 
 const onDragEnd = (result, columns, setColumns) => {
