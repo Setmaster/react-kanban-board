@@ -2,19 +2,11 @@ import React, {useState, useEffect} from "react";
 import {DragDropContext, Droppable, Draggable} from "react-beautiful-dnd";
 import {v4 as uuid} from "uuid";
 
-const itemsFromBackend = [
-    {id: uuid(), description: "First task"},
-    {id: uuid(), description: "Second task"},
-    {id: uuid(), description: "Third task"},
-    {id: uuid(), description: "Fourth task"},
-];
-
-let unassignedOrders = [{id: 9999999, description: "Test"}];
 
 const columnsFromBackend = {
     ["orders"]: {
         name: "Unassigned Orders",
-        items: unassignedOrders,
+        items: [],
     },
 };
 
@@ -90,31 +82,44 @@ function App() {
     };
 
     useEffect(() => {
-        // Conditional logic for data for list of drivers
 
-
-        //  Conditional logic for orders list
+        //  Conditional logic for drivers and orders list
         if (!loaded) {
             Promise.all([getDriver(), getOrder()]).then((values) => {
-                let newColumns = {...columns,
-                    ["orders"]: {
-                    name: "Unassigned orders",
-                        items: orders,
-                }};
-                for (const driver of drivers) {
-                    newColumns = {...newColumns, [driver.id]: {
-                            name: driver.drivername,
-                            items: [],
-                        }}
-                }
-                setColumns({
-                    ...newColumns
+
+                let unassignedOrders = orders.filter((uOrder)=>{
+                    return uOrder.assigned === false;
+
                 });
+
+                console.log("uasssssssss: ", unassignedOrders);
+
+                let newColumns = {
+                    ...columns,
+                    ["orders"]: {
+                        name: "Unassigned Orders",
+                        items: unassignedOrders,
+                    },
+                };
+                for (const driver of drivers) {
+
+                    let driverOrders = orders.filter((dOrder)=>{
+                        return dOrder.driver_id === driver.id;
+                    })
+                    newColumns = {
+                        ...newColumns,
+                        [driver.id]: {
+                            name: driver.drivername,
+                            items: driverOrders,
+                        },
+                    };
+                }
+                setColumns({ ...newColumns });
                 setLoaded(true);
             });
         }
 
-        //  Set dependencies
+        //  Setting dependencies for useEffect
     }, [orders, drivers, columns, setColumns, loaded, setLoaded]);
 
     const checkOrders = (unorder) => {
