@@ -12,8 +12,11 @@ const Order = (props) => {
     const [revenue, setRevenue] = useState(item.revenue_amount)
     const [editable, setEditable] = useState(false);
 
-    let displayCost = cost;
-
+    let displayCost = item.cost;
+    let buttonMode = "Edit";
+    if(editable){
+        buttonMode = "Save";
+    }
 
     if(!editable && item.cost !== newCost){
         setNewCost(item.cost);
@@ -24,9 +27,7 @@ const Order = (props) => {
     }
 
     console.log("RENDERED ", item.description);
-    // if(cost !== item.cost){
-    //     setCost(item.cost);
-    // }
+
     return (
         <Draggable
             key={item.id}
@@ -75,8 +76,11 @@ const Order = (props) => {
                                                  editCost(item.id, newCost, item.driver_id);
                                                  setCost(newCost);
                                             }
+                                            if(item.driver_id !== 1){
+                                                return;
+                                            }
                                         editable ? setEditable(false) : setEditable(true);
-                                    }}>Edit
+                                    }}>{buttonMode}
                                     </button>
                                 </th>
                             </tr>
