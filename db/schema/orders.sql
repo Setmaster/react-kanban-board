@@ -6,6 +6,6 @@ CREATE TABLE orders (
   description TEXT NOT NULL,
   cost INTEGER  NOT NULL DEFAULT 0.00,
   revenue_amount INTEGER  NOT NULL DEFAULT 0.00,
-  assigned BOOLEAN DEFAULT false
+  assigned BOOLEAN DEFAULT true
 
 )

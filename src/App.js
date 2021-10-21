@@ -1,6 +1,10 @@
 import React, {useState, useEffect} from "react";
 import {DragDropContext, Droppable, Draggable} from "react-beautiful-dnd";
 import {v4 as uuid} from "uuid";
+import Order from "./components/Order";
+import EditCost from "./components/helpers/editCost";
+import EditRevenue from "./components/helpers/editRevenue";
+import UpdateDriverOrder from "./components/helpers/updateDriverOrder";
 
 
 const columnsFromBackend = {
@@ -16,12 +20,14 @@ const onDragEnd = (result, columns, setColumns) => {
     const {source, destination} = result;
 
     if (source.droppableId !== destination.droppableId) {
+        console.log("COLUMNS: ", columns, "result: ", result);
         const sourceColumn = columns[source.droppableId];
         const destColumn = columns[destination.droppableId];
         const sourceItems = [...sourceColumn.items];
         const destItems = [...destColumn.items];
         const [removed] = sourceItems.splice(source.index, 1);
         destItems.splice(destination.index, 0, removed);
+        UpdateDriverOrder(result.draggableId, destination.droppableId);
         setColumns({
             ...columns,
             [source.droppableId]: {
@@ -49,11 +55,11 @@ const onDragEnd = (result, columns, setColumns) => {
 };
 
 function App() {
-    const [columns, setColumns] = useState(columnsFromBackend);
+    const [columns, setColumns] = useState({});
     const [drivers, setDrivers] = useState([]);
     const [orders, setOrders] = useState([]);
+    const [upDriverOrder, setUpDriverOrder] = useState([]);
     const [loaded, setLoaded] = useState(false);
-
 
     // Func to fetch data for drivers from db
     const getDriver = async () => {
@@ -74,38 +80,31 @@ function App() {
             const jsonData = await response.json();
 
             setOrders(jsonData);
-
-
         } catch (error) {
             console.log(error.message);
         }
     };
 
-    useEffect(() => {
 
-        //  Conditional logic for drivers and orders list
+    useEffect(() => {
+        //  Conditional logic for drivers and orders list on page load
         if (!loaded) {
             Promise.all([getDriver(), getOrder()]).then((values) => {
-
-                let unassignedOrders = orders.filter((uOrder)=>{
+                // Filter orders based on assigned status
+                let unassignedOrders = orders.filter((uOrder) => {
                     return uOrder.assigned === false;
-
                 });
 
-                console.log("uasssssssss: ", unassignedOrders);
-
                 let newColumns = {
-                    ...columns,
-                    ["orders"]: {
-                        name: "Unassigned Orders",
-                        items: unassignedOrders,
-                    },
+                    ...columns
                 };
-                for (const driver of drivers) {
 
-                    let driverOrders = orders.filter((dOrder)=>{
+                // Iterating over list of stored drivers
+                for (const driver of drivers) {
+                    // Filtering orders based on assignment to individual drivers
+                    let driverOrders = orders.filter((dOrder) => {
                         return dOrder.driver_id === driver.id;
-                    })
+                    });
                     newColumns = {
                         ...newColumns,
                         [driver.id]: {
@@ -114,7 +113,7 @@ function App() {
                         },
                     };
                 }
-                setColumns({ ...newColumns });
+                setColumns({...newColumns});
                 setLoaded(true);
             });
         }
@@ -122,37 +121,39 @@ function App() {
         //  Setting dependencies for useEffect
     }, [orders, drivers, columns, setColumns, loaded, setLoaded]);
 
-    const checkOrders = (unorder) => {
-        return unorder.assigned === false;
-    };
-
-    // unassignedOrders = orders.filter(checkOrders);
-
-    //   console.log("drivers: ", drivers);
-    //   console.log("orders: ", orders);
-
-    // console.log("newArr: ", unassignedOrders);
-
     return (
-        <div style={{display: "flex", justifyContent: "center", height: "100%"}}>
+        <div
+            style={{
+                display: "flex",
+                justifyContent: "center",
+                height: "100%",
+                border: "7px solid pink",
+            }}
+        >
             <DragDropContext
                 onDragEnd={(result) => onDragEnd(result, columns, setColumns)}
             >
                 {Object.entries(columns).map(([id, column]) => {
                     return (
                         <div
+                            className="main-container"
                             style={{
                                 display: "flex",
                                 flexDirection: "column",
                                 alignItems: "center",
+                                border: "3px solid yellow",
                             }}
                         >
                             <h2>{column.name}</h2>
-                            <div style={{margin: 8}}>
+                            <div
+                                className="column-outer-container"
+                                style={{margin: 8, border: "7px dotted teal"}}
+                            >
                                 <Droppable droppableId={id} key={id}>
                                     {(provided, snapshot) => {
                                         return (
                                             <div
+                                                className="column-container"
                                                 {...provided.droppableProps}
                                                 ref={provided.innerRef}
                                                 style={{
@@ -162,43 +163,19 @@ function App() {
                                                     padding: 4,
                                                     width: 250,
                                                     minHeight: 500,
+                                                    border: "5px solid black",
                                                 }}
                                             >
                                                 {/* {console.log("columnnnnnnn", column.items)} */}
                                                 {column.items.map((item, index) => {
-                                                    // console.log('ITEM:', item);
+                                                    //  console.log('ITEM:', item);
                                                     return (
-                                                        <Draggable
-                                                            key={item.id}
-                                                            draggableId={item.id.toString()}
+                                                        <Order
+                                                            item={item}
                                                             index={index}
-                                                        >
-                                                            {(provided, snapshot) => {
-                                                                return (
-                                                                    <div
-                                                                        ref={provided.innerRef}
-                                                                        {...provided.draggableProps}
-                                                                        {...provided.dragHandleProps}
-                                                                        style={{
-                                                                            userSelect: "none",
-                                                                            padding: 16,
-                                                                            margin: "0 0 8px 0",
-                                                                            minHeight: "50px",
-                                                                            backgroundColor: snapshot.isDragging
-                                                                                ? "#263B4A"
-                                                                                : "#456C86",
-                                                                            color: "white",
-                                                                            ...provided.draggableProps.style,
-                                                                        }}
-                                                                    >
-                                                                        <h3>Description: {item.description}</h3>
-                                                                        <h3>Cost: ${item.cost}</h3>
-                                                                        <h3>Revenue: ${item.revenue_amount}</h3>
-                                                                        <h4>Driver: {item.drivername}</h4>
-                                                                    </div>
-                                                                );
-                                                            }}
-                                                        </Draggable>
+                                                            editCost={EditCost}
+                                                            editRevenue={EditRevenue}
+                                                        />
                                                     );
                                                 })}
                                                 {provided.placeholder}
