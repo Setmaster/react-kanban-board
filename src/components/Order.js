@@ -7,43 +7,18 @@ const Order = (props) => {
     const editCost = props.editCost;
     const editRevenue = props.editRevenue;
 
-    const [cost, setCost] = useState(item.cost)
-    const [newCost, setNewCost] = useState(item.cost)
-    const [revenue, setRevenue] = useState(item.revenue_amount)
-    const [newRevenue, setNewRevenue] = useState(item.revenue_amount)
-    const [editable, setEditable] = useState(false);
-    const [buttonMode, setButtonMode] = useState("Edit");
-    let displayCost = item.cost;
-    let displayRevenue = item.revenue_amount;
-
-    console.log("Driver id of",item.description, "is",item.driver_id);
-    // let buttonMode = "Edit";
-    // if(editable){
-    //     buttonMode = "Save";
-    // }
-
-    // if(!editable && item.cost !== newCost && item.revenue_amount !== newRevenue){
-    //     setNewCost(item.cost);
-    //     setNewRevenue(item.revenue_amount);
-    // }else if(!editable && item.cost !== newCost){
-    //     setNewCost(item.cost);
-    // }else if(!editable && item.revenue_amount !== newRevenue){
-    //     setNewRevenue(item.revenue_amount);
-    // }
-    if (editable) {
-        console.log("Is editable");
-        displayCost = newCost;
-        displayRevenue = newRevenue;
-    }
-
-    console.log("RENDERED ", item.description);
+    const [state, setState] = useState(
+        {
+            cost: item.cost,
+            newCost: item.cost,
+            revenue: item.revenue_amount,
+            newRevenue: item.revenue_amount,
+            editable: false,
+            buttonText: "Edit",
+        });
 
     return (
-        <Draggable
-            key={item.id}
-            draggableId={item.id.toString()}
-            index={index}
-        >
+        <Draggable key={item.id} draggableId={item.id.toString()} index={index}>
             {(provided, snapshot) => {
                 return (
                     <div
@@ -57,9 +32,7 @@ const Order = (props) => {
                             margin: "0 0 8px 0",
                             minHeight: "50px",
                             border: "5px solid red",
-                            backgroundColor: snapshot.isDragging
-                                ? "#263B4A"
-                                : "#456C86",
+                            backgroundColor: snapshot.isDragging ? "#263B4A" : "#456C86",
                             color: "white",
                             ...provided.draggableProps.style,
                         }}
@@ -69,63 +42,88 @@ const Order = (props) => {
                         <table className="table-cont">
                             <thead>
                             <tr>
-                                <h3>Cost: $
+                                <label>Cost: ${state.cost}</label>
+                            </tr>
+                            <tr>
+                                <input
+                                    type="text"
+                                    className="edit-control"
+                                    value={state.newCost}
+
+                                    onChange={(d) => {
+                                        setState(prevState => {
+                                            return(
+                                                {...prevState, newCost:d.target.value}
+                                            )
+                                        })
+                                    }}
+                                />
+
+                                <th>
+                                    <button
+                                        type="submit"
+                                        onClick={(e) => {
+                                            if (item.driver_id !== 1) {
+                                                return;
+                                            }
+                                            if (state.editable) {
+
+                                                editCost(item.id, state.newCost, item.driver_id);
+                                                editRevenue(item.id, state.newRevenue, item.driver_id);
+                                            setState(prevState => {
+                                                return(
+                                                    {...prevState, cost: state.newCost, revenue: state.newRevenue, editable: false, buttonText: "Edit"}
+                                                )
+                                            })
+                                            }else{
+                                                setState(prevState => {
+                                                    return(
+                                                        {...prevState, editable: true, buttonText: "Save"}
+                                                    )
+                                                })
+                                            }
+
+                                        }}
+                                    >
+                                        {state.buttonText}
+                                    </button>
+                                </th>
+
+                            </tr>
+                                <thead>
+                                    <tr>
+                                        <label>Revenue: ${state.revenue}</label>
+                                    </tr>
+                                    {/*Revenue: ${" "}*/}
                                     <input
                                         type="text"
                                         className="edit-control"
-                                        value={displayCost}
-                                        onChange={d => {
-                                            setNewCost(d.target.value);
+                                        value={state.newRevenue}
+                                        onChange={(d) => {
+                                            setState(prevState => {
+                                                return(
+                                                    {...prevState, newRevenue:d.target.value}
+                                                )
+                                            })
                                         }}
                                     />
-                                </h3>
-                                <th>
-                                    <button onClick={(e) => {
-                                        if (item.driver_id !== 1) {
-                                            console.log("NOT UNASSIGNED")
-                                            return;
-                                        }
+                                </thead>
+                                <th
+                                    style={{
+                                        padding: "0.5rem",
+                                        textAlign: "",
+                                    }}
+                                >
 
-                                        if (editable) {
-
-                                            setCost(newCost);
-                                            setRevenue(newRevenue);
-                                            Promise.all([editCost(item.id, newCost, item.driver_id), editRevenue(item.id, newRevenue, item.driver_id)]).then(() => {
-                                                console.log("Saved cost and revenue to db");
-                                                props.onOrderCreated();
-                                                setEditable(false);
-                                                setButtonMode("Edit");
-                                            })
-
-                                        }else{
-                                            setEditable(true);
-                                            setButtonMode("Save");
-                                        }
-
-
-                                    }}>{buttonMode}
-                                    </button>
                                 </th>
-                            </tr>
-                            <tr>
-                                <th>
-                                    Revenue: $ <input
-                                    type="text"
-                                    className="edit-control"
-                                    value={displayRevenue}
-                                    onChange={d => {
-                                        setNewRevenue(d.target.value);
-                                    }
-                                    }
-                                />
-                                </th>
-                            </tr>
+
                             </thead>
                         </table>
                     </div>
                 );
             }}
-        </Draggable>);
-}
+        </Draggable>
+    );
+};
 
 export default Order;

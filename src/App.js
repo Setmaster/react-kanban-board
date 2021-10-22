@@ -6,9 +6,6 @@ import EditCost from "./components/helpers/editCost";
 import EditRevenue from "./components/helpers/editRevenue";
 import UpdateDriverOrder from "./components/helpers/updateDriverOrder";
 
-
-
-
 function App() {
     const [columns, setColumns] = useState({});
     const [drivers, setDrivers] = useState([]);
@@ -91,10 +88,6 @@ function App() {
             console.log("NOT LOADED");
             Promise.all([getDriver(), getOrder()]).then((values) => {
                 console.log("Drivers and orders:",drivers, orders);
-                // Filter orders based on assigned status
-                // let unassignedOrders = orders.filter((uOrder) => {
-                //     return uOrder.assigned === false;
-                // });
 
                 let newColumns = {
                     ...columns
