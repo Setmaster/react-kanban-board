@@ -10,20 +10,30 @@ const Order = (props) => {
     const [cost, setCost] = useState(item.cost)
     const [newCost, setNewCost] = useState(item.cost)
     const [revenue, setRevenue] = useState(item.revenue_amount)
+    const [newRevenue, setNewRevenue] = useState(item.revenue_amount)
     const [editable, setEditable] = useState(false);
-
+    const [buttonMode, setButtonMode] = useState("Edit");
     let displayCost = item.cost;
-    let buttonMode = "Edit";
-    if(editable){
-        buttonMode = "Save";
-    }
+    let displayRevenue = item.revenue_amount;
 
-    if(!editable && item.cost !== newCost){
-        setNewCost(item.cost);
-    }
-    if(editable){
+    console.log("Driver id of",item.description, "is",item.driver_id);
+    // let buttonMode = "Edit";
+    // if(editable){
+    //     buttonMode = "Save";
+    // }
+
+    // if(!editable && item.cost !== newCost && item.revenue_amount !== newRevenue){
+    //     setNewCost(item.cost);
+    //     setNewRevenue(item.revenue_amount);
+    // }else if(!editable && item.cost !== newCost){
+    //     setNewCost(item.cost);
+    // }else if(!editable && item.revenue_amount !== newRevenue){
+    //     setNewRevenue(item.revenue_amount);
+    // }
+    if (editable) {
         console.log("Is editable");
         displayCost = newCost;
+        displayRevenue = newRevenue;
     }
 
     console.log("RENDERED ", item.description);
@@ -71,15 +81,28 @@ const Order = (props) => {
                                 </h3>
                                 <th>
                                     <button onClick={(e) => {
-                                            if(editable){
-                                                console.log("Saved cost to db", "New cost is: ", newCost);
-                                                 editCost(item.id, newCost, item.driver_id);
-                                                 setCost(newCost);
-                                            }
-                                            if(item.driver_id !== 1){
-                                                return;
-                                            }
-                                        editable ? setEditable(false) : setEditable(true);
+                                        if (item.driver_id !== 1) {
+                                            console.log("NOT UNASSIGNED")
+                                            return;
+                                        }
+
+                                        if (editable) {
+
+                                            setCost(newCost);
+                                            setRevenue(newRevenue);
+                                            Promise.all([editCost(item.id, newCost, item.driver_id), editRevenue(item.id, newRevenue, item.driver_id)]).then(() => {
+                                                console.log("Saved cost and revenue to db");
+                                                props.onOrderCreated();
+                                                setEditable(false);
+                                                setButtonMode("Edit");
+                                            })
+
+                                        }else{
+                                            setEditable(true);
+                                            setButtonMode("Save");
+                                        }
+
+
                                     }}>{buttonMode}
                                     </button>
                                 </th>
@@ -89,21 +112,12 @@ const Order = (props) => {
                                     Revenue: $ <input
                                     type="text"
                                     className="edit-control"
-                                    value={revenue}
-                                    onChange={f => {
-                                    //    setRevenue(f.target.value)
-                                    }}
+                                    value={displayRevenue}
+                                    onChange={d => {
+                                        setNewRevenue(d.target.value);
+                                    }
+                                    }
                                 />
-                                </th>
-                                <th
-                                    style={{
-                                        padding: "0.5rem",
-                                        textAlign: "",
-                                    }}
-                                >
-                                    <button onClick={(e) => {
-                                        editRevenue(item.id, revenue)
-                                    }}>Edit</button>
                                 </th>
                             </tr>
                             </thead>

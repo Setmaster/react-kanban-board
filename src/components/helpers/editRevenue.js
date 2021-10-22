@@ -1,4 +1,9 @@
-const EditRevenue = async (id, revenue_amount) => {
+const EditRevenue = async (id, revenue_amount, driverId) => {
+
+    if(driverId !== 1){
+        console.log("NOT EDITABLE");
+        return;
+    }
 
     try {
         const body = { revenue_amount };

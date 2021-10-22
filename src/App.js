@@ -7,60 +7,59 @@ import EditRevenue from "./components/helpers/editRevenue";
 import UpdateDriverOrder from "./components/helpers/updateDriverOrder";
 
 
-const columnsFromBackend = {
-    ["orders"]: {
-        name: "Unassigned Orders",
-        items: [],
-    },
-};
 
-const onDragEnd = (result, columns, setColumns) => {
-    if (!result.destination) return;
-
-    const {source, destination} = result;
-
-    if (source.droppableId !== destination.droppableId) {
-        console.log("COLUMNS: ", columns, "result: ", result);
-        const sourceColumn = columns[source.droppableId];
-        const destColumn = columns[destination.droppableId];
-        const sourceItems = [...sourceColumn.items];
-        const destItems = [...destColumn.items];
-        const [removed] = sourceItems.splice(source.index, 1);
-        destItems.splice(destination.index, 0, removed);
-        UpdateDriverOrder(result.draggableId, destination.droppableId);
-        setColumns({
-            ...columns,
-            [source.droppableId]: {
-                ...sourceColumn,
-                items: sourceItems,
-            },
-            [destination.droppableId]: {
-                ...destColumn,
-                items: destItems,
-            },
-        });
-    } else {
-        const column = columns[source.droppableId];
-        const copiedItems = [...column.items];
-        const [removed] = copiedItems.splice(source.index, 1);
-        copiedItems.splice(destination.index, 0, removed);
-        setColumns({
-            ...columns,
-            [source.droppableId]: {
-                ...column,
-                items: copiedItems,
-            },
-        });
-    }
-};
 
 function App() {
     const [columns, setColumns] = useState({});
     const [drivers, setDrivers] = useState([]);
     const [orders, setOrders] = useState([]);
-    const [upDriverOrder, setUpDriverOrder] = useState([]);
     const [loaded, setLoaded] = useState(false);
 
+
+    const onDragEnd = (result, columns, setColumns) => {
+        if (!result.destination) return;
+
+        const {source, destination} = result;
+
+        if (source.droppableId !== destination.droppableId) {
+            console.log("COLUMNS: ", columns, "result: ", result);
+            const sourceColumn = columns[source.droppableId];
+            const destColumn = columns[destination.droppableId];
+            const sourceItems = [...sourceColumn.items];
+            const destItems = [...destColumn.items];
+            const [removed] = sourceItems.splice(source.index, 1);
+            destItems.splice(destination.index, 0, removed);
+            UpdateDriverOrder(result.draggableId, destination.droppableId);
+            setColumns({
+                ...columns,
+                [source.droppableId]: {
+                    ...sourceColumn,
+                    items: sourceItems,
+                },
+                [destination.droppableId]: {
+                    ...destColumn,
+                    items: destItems,
+                },
+            });
+            setLoaded(false);
+        } else {
+            const column = columns[source.droppableId];
+            const copiedItems = [...column.items];
+            const [removed] = copiedItems.splice(source.index, 1);
+            copiedItems.splice(destination.index, 0, removed);
+            setColumns({
+                ...columns,
+                [source.droppableId]: {
+                    ...column,
+                    items: copiedItems,
+                },
+            });
+        }
+    };
+
+    const onNewOrder = () => {
+         setLoaded(false);
+    };
     // Func to fetch data for drivers from db
     const getDriver = async () => {
         try {
@@ -89,11 +88,13 @@ function App() {
     useEffect(() => {
         //  Conditional logic for drivers and orders list on page load
         if (!loaded) {
+            console.log("NOT LOADED");
             Promise.all([getDriver(), getOrder()]).then((values) => {
+                console.log("Drivers and orders:",drivers, orders);
                 // Filter orders based on assigned status
-                let unassignedOrders = orders.filter((uOrder) => {
-                    return uOrder.assigned === false;
-                });
+                // let unassignedOrders = orders.filter((uOrder) => {
+                //     return uOrder.assigned === false;
+                // });
 
                 let newColumns = {
                     ...columns
@@ -103,6 +104,7 @@ function App() {
                 for (const driver of drivers) {
                     // Filtering orders based on assignment to individual drivers
                     let driverOrders = orders.filter((dOrder) => {
+                        // console.log("Order", dOrder.description, "belongs to", driver.id);
                         return dOrder.driver_id === driver.id;
                     });
                     newColumns = {
@@ -175,6 +177,7 @@ function App() {
                                                             index={index}
                                                             editCost={EditCost}
                                                             editRevenue={EditRevenue}
+                                                            onOrderCreated={onNewOrder}
                                                         />
                                                     );
                                                 })}
