@@ -11,13 +11,15 @@ function App() {
     const [drivers, setDrivers] = useState([]);
     const [orders, setOrders] = useState([]);
     const [loaded, setLoaded] = useState(false);
+    const [refresh, setRefresh] = useState(false);
 
 
-    const onDragEnd = (result, columns, setColumns) => {
+    const onDragEnd = async (result) => {
+        console.log("EAR CIL", columns);
         if (!result.destination) return;
 
         const {source, destination} = result;
-
+        console.log("CIL source dest", source, destination);
         if (source.droppableId !== destination.droppableId) {
             console.log("COLUMNS: ", columns, "result: ", result);
             const sourceColumn = columns[source.droppableId];
@@ -26,19 +28,22 @@ function App() {
             const destItems = [...destColumn.items];
             const [removed] = sourceItems.splice(source.index, 1);
             destItems.splice(destination.index, 0, removed);
-            UpdateDriverOrder(result.draggableId, destination.droppableId);
-            setColumns({
-                ...columns,
-                [source.droppableId]: {
-                    ...sourceColumn,
-                    items: sourceItems,
-                },
-                [destination.droppableId]: {
-                    ...destColumn,
-                    items: destItems,
-                },
-            });
-            setLoaded(false);
+            UpdateDriverOrder(result.draggableId, destination.droppableId).then(()=> {
+                setColumns({
+                    ...columns,
+                    [source.droppableId]: {
+                        ...sourceColumn,
+                        items: sourceItems,
+                    },
+                    [destination.droppableId]: {
+                        ...destColumn,
+                        items: destItems,
+                    },
+                });
+
+                console.log("CIL", columns);
+                 setLoaded(false);
+            })
         } else {
             const column = columns[source.droppableId];
             const copiedItems = [...column.items];
@@ -54,9 +59,7 @@ function App() {
         }
     };
 
-    const onNewOrder = () => {
-         setLoaded(false);
-    };
+
     // Func to fetch data for drivers from db
     const getDriver = async () => {
         try {
@@ -126,7 +129,11 @@ function App() {
             }}
         >
             <DragDropContext
-                onDragEnd={(result) => onDragEnd(result, columns, setColumns)}
+                onDragEnd={
+                     (result) => {
+                         console.log("Result:",result);
+                        onDragEnd(result);
+                    }}
             >
                 {Object.entries(columns).map(([id, column]) => {
                     return (
@@ -166,11 +173,11 @@ function App() {
                                                     //  console.log('ITEM:', item);
                                                     return (
                                                         <Order
+                                                            key={item.id}
                                                             item={item}
                                                             index={index}
                                                             editCost={EditCost}
                                                             editRevenue={EditRevenue}
-                                                            onOrderCreated={onNewOrder}
                                                         />
                                                     );
                                                 })}
